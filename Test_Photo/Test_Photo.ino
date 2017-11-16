@@ -15,7 +15,7 @@ int value;          // Store value from photoresistor (0-1023)
 
 void setup(){
  Serial.begin(38400);
- pinMode(ledPin, OUTPUT);  // Set lepPin - 9 pin as an output
+ //pinMode(ledPin, OUTPUT);  // Set lepPin - 9 pin as an output
  pinMode(pResistor, INPUT);// Set pResistor - A0 pin as an input (optional)
 }
 
@@ -23,12 +23,12 @@ void loop(){
   value = analogRead(pResistor);
   
   //You can change value "25"
-  if (value > 0){
-    digitalWrite(ledPin, LOW);  //Turn led off
-  }
-  else{
-    digitalWrite(ledPin, HIGH); //Turn led on
-  }
+//  if (value > 0){
+//    digitalWrite(ledPin, LOW);  //Turn led off
+//  }
+//  else{
+//    digitalWrite(ledPin, HIGH); //Turn led on
+//  }
 
   delay(500); //Small delay
   Serial.print("The value is: ");
