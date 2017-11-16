@@ -37,6 +37,11 @@ int speed_back_left = 90;
 int speed_front_right = 90;
 int speed_front_left = 90;
 
+const int photoresistorPin = A0;
+const int ledPin = 9;
+
+int photoresistorValue;
+
 //Helper Functions 
 
 int dec_speed(Servo motor, int& speed){
@@ -158,6 +163,7 @@ void setup() {
   front_left.attach(FRONT_LEFT_PIN);
 
   Serial.begin(38400); //9600 for motors, need 57600 for the controller though
+  pinMode(photoresistorPin, INPUT);// Set pResistor - A0 pin as an input (optional)
   
   error = ps2x.config_gamepad(5,4,3,2, true, true);
    
@@ -200,6 +206,12 @@ void setup() {
 } 
 
 void loop() {
+
+  photoresistorValue = analogRead(photoresistorPin);
+
+  Serial.print("Light Sensor value is: ");
+  Serial.println(photoresistorValue);
+  
    ps2x.read_gamepad(false, vibrate);
    if(ps2x.ButtonPressed(PSB_START)) use_controller = true; 
 
