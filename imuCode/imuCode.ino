@@ -290,7 +290,7 @@ void loop(){
   
   
    ps2x.read_gamepad(false, vibrate);
-   if(ps2x.ButtonPressed(PSB_START)) use_controller = true; 
+   if(ps2x.ButtonPressed(PSB_START)) use_controller = true;// 
 }
 
 
