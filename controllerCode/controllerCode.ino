@@ -128,15 +128,14 @@ void descend(){
   inc_speed(front_right, MAX_CCW, speed_front_right);  
 }
 
-
 void turn_left(){ //assuming hard left
-  inc_speed(back_left, 90, speed_back_left); //MAX_CW
+  dec_speed(back_left, speed_back_left); //MAX_CW
   inc_speed(back_right, MAX_CW, speed_back_right); //move forwards 
 }
 
 void turn_right(){ //assuming hard right 
   inc_speed(back_left, MAX_CCW, speed_back_left);
-  inc_speed(back_right, 90, speed_back_left); //MAX_CCW
+  dec_speed(back_right, speed_back_right); //MAX_CCW
 }
 
 void rise_left(){
@@ -206,7 +205,6 @@ void loop() {
    if(!use_controller){
   }
   else{
-    Serial.println("Shouldn't be here");
     if(ps2x.Button(PSB_R1)){ //take inputs from both the sticks
 #ifdef debug
        Serial.print(ps2x.Analog(PSS_RX),DEC); 
