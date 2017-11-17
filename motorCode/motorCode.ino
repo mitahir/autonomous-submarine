@@ -91,10 +91,10 @@ void loop()
        // value is between 0 and 180
        Serial.println("Value is between 0 and 180");
        // Write to Servo
- //      back_right.write(val);
-  //     front_right.write(val);
-//       back_left.write(val);
-       front_left.write(val);
+  //     back_right.write(val);
+//    front_right.write(val);
+ //     back_left.write(val);
+       front_right.write(val);
      }
      // The value is not between 0 and 180.
      // We do not want write this value to

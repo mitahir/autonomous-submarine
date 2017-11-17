@@ -1,3 +1,4 @@
+
 #include <PS2X_lib.h>
 #include <Servo.h>
 #include <Wire.h>
@@ -89,6 +90,7 @@ int dec_speed(Servo motor, int& speed){
 }
 
 int inc_speed(Servo motor, int max, int& speed){ //increase speed fast. Note: cw == 1 for clockwise & 0 for ccw
+  //NOTE: THIS FUNCTION IS ONLY FOR MOVING TO MAXIMUM CW AND CCW SPEEDS 
   if(abs(speed - max) <= FAST_INC){
       motor.write(max);
       speed = max;
@@ -96,11 +98,6 @@ int inc_speed(Servo motor, int max, int& speed){ //increase speed fast. Note: cw
     }
   
   if(max == MAX_CCW){ //want to get to max ccw speed
-//    if (speed >= max){
-//      motor.write(max);
-//      speed = max; 
-//      return speed; 
-//     }
     //Case 1: speed already > 90
     if(speed >= 90){
       speed += FAST_INC;   
@@ -112,13 +109,7 @@ int inc_speed(Servo motor, int max, int& speed){ //increase speed fast. Note: cw
       }
       speed += FAST_INC; 
     }
-  }
-  else{
-//    if (speed <= max){
-//      motor.write(max);
-//      speed = max; 
-//      return speed; 
-//    }
+  } else {
     //Case 1: speed already < 90
     if(speed <= 90){
       speed -= FAST_INC;   
@@ -162,13 +153,13 @@ void descend(){
 
 
 void turn_left(){ //assuming hard left
-  inc_speed(back_left, 90, speed_back_left); //MAX_CW
+  dec_speed(back_left, speed_back_left); //MAX_CW
   inc_speed(back_right, MAX_CW, speed_back_right); //move forwards 
 }
 
 void turn_right(){ //assuming hard right 
   inc_speed(back_left, MAX_CCW, speed_back_left);
-  inc_speed(back_right, 90, speed_back_left); //MAX_CCW
+  dec_speed(back_right, speed_back_right); //MAX_CCW
 }
 
 void rise_left(){
@@ -244,12 +235,13 @@ void setup() {
      back_right.write(90);
      back_left.write(90);
      front_right.write(90);
-     back_left.write(90);
+     front_left.write(90);
   
   Serial.println("Initialized Shaheen One"); 
 } 
 
-void loop(){
+void loop() {
+
   sensors_event_t event; 
   bno.getEvent(&event);
 
@@ -269,28 +261,25 @@ void loop(){
   //delay(100);
   yaw_adjusted = 360;
   if ((yaw>0 && yaw<15) || (yaw<360&&yaw>345)){
-  //if(1){
     move_forwards();
-    //delay(1000);
-  }
+   }
   
   if (yaw > 15 && yaw < 90){
-    turn_right();
-    Serial.print("Turning leftttttttt\n ");
-    ///delay(2000);
+    turn_left();
   } 
 
   if (yaw<=345 && yaw > 270){
     turn_right();
-    Serial.print("Turning rightttttttttt\n");
-    //delay(2000);
   }
+  
   // CONTROLLER LOOP
 
   
   
    ps2x.read_gamepad(false, vibrate);
    if(ps2x.ButtonPressed(PSB_START)) use_controller = true;// 
-}
+   
+   
 
+}
 

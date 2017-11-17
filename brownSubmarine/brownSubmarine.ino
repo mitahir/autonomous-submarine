@@ -62,6 +62,7 @@ int dec_speed(Servo motor, int& speed){
 }
 
 int inc_speed(Servo motor, int max, int& speed){ //increase speed fast. Note: cw == 1 for clockwise & 0 for ccw
+  //NOTE: THIS FUNCTION IS ONLY FOR MOVING TO MAXIMUM CW AND CCW SPEEDS 
   if(abs(speed - max) <= FAST_INC){
       motor.write(max);
       speed = max;
@@ -69,11 +70,6 @@ int inc_speed(Servo motor, int max, int& speed){ //increase speed fast. Note: cw
     }
   
   if(max == MAX_CCW){ //want to get to max ccw speed
-//    if (speed >= max){
-//      motor.write(max);
-//      speed = max; 
-//      return speed; 
-//     }
     //Case 1: speed already > 90
     if(speed >= 90){
       speed += FAST_INC;   
@@ -86,12 +82,6 @@ int inc_speed(Servo motor, int max, int& speed){ //increase speed fast. Note: cw
       speed += FAST_INC; 
     }
   }
-  else{
-//    if (speed <= max){
-//      motor.write(max);
-//      speed = max; 
-//      return speed; 
-//    }
     //Case 1: speed already < 90
     if(speed <= 90){
       speed -= FAST_INC;   
@@ -135,13 +125,13 @@ void descend(){
 
 
 void turn_left(){ //assuming hard left
-  inc_speed(back_left, 90, speed_back_left); //MAX_CW
+  dec_speed(back_left, speed_back_left); //MAX_CW
   inc_speed(back_right, MAX_CW, speed_back_right); //move forwards 
 }
 
 void turn_right(){ //assuming hard right 
   inc_speed(back_left, MAX_CCW, speed_back_left);
-  inc_speed(back_right, 90, speed_back_left); //MAX_CCW
+  dec_speed(back_right, speed_back_right); //MAX_CCW
 }
 
 void rise_left(){
