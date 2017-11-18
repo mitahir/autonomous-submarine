@@ -93,7 +93,7 @@ int inc_speed(Servo motor, int max, int& speed){ //increase speed fast. Note: cw
       }
       speed -= FAST_INC; 
     }
-  }
+ 
 
   motor.write(speed);
   return speed; 
