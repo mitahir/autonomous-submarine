@@ -82,6 +82,7 @@ int inc_speed(Servo motor, int max, int& speed){ //increase speed fast. Note: cw
       speed += FAST_INC; 
     }
   }
+  else{
     //Case 1: speed already < 90
     if(speed <= 90){
       speed -= FAST_INC;   
@@ -93,8 +94,7 @@ int inc_speed(Servo motor, int max, int& speed){ //increase speed fast. Note: cw
       }
       speed -= FAST_INC; 
     }
- 
-
+  }
   motor.write(speed);
   return speed; 
 }
