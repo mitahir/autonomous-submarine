@@ -6,7 +6,7 @@
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 
-#define debug 1
+//#define debug 1
 
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
@@ -44,31 +44,11 @@ int speed_back_left = 90;
 int speed_front_right = 90;
 int speed_front_left = 90;
 
-int start = 1;
-
-int angle = 90;
-int position = 90;
-int feedbackPin = 5;
-int val = 0;
-int calVal[] = {191, 1011};  // initial cal values
-int calStartPos = 0;
-int final = 90;
-
 float yaw = 0;
 float pitch = 0;
 float roll = 0;
 
 float yaw_adjusted = 0;
-
-Servo servo;
-
-#define NUMREADINGS 10      // Number of readings to take for smoothing
-
-
-int readings[NUMREADINGS];                // the readings from the analog input
-int index = 0;                            // the index of the current reading
-int total = 0;                            // the running total
-int average = 0; 
 
 //Helper Functions 
 

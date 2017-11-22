@@ -21,6 +21,11 @@
 #define MIN_CW  80
 #define STOP    90
 
+//Define controller thresholds
+#define XY_MAX 225
+#define XY_MID 150
+#define XY_MIN 0
+
 //Global Variables
 Servo back_right; 
 Servo back_left; 
@@ -36,6 +41,13 @@ int speed_back_right = 90;
 int speed_back_left = 90;
 int speed_front_right = 90;
 int speed_front_left = 90;
+
+//Constants
+const int pResistor = A0; // Photoresistor at Arduino analog pin A0
+const int ledPin=9;       // Led pin at Arduino pin 9
+
+//Variables
+int value;          // Store value from photoresistor (0-1023)
 
 //Helper Functions 
 
@@ -64,11 +76,6 @@ int inc_speed(Servo motor, int max, int& speed){ //increase speed fast. Note: cw
     }
   
   if(max == MAX_CCW){ //want to get to max ccw speed
-//    if (speed >= max){
-//      motor.write(max);
-//      speed = max; 
-//      return speed; 
-//     }
     //Case 1: speed already > 90
     if(speed >= 90){
       speed += FAST_INC;   
@@ -82,11 +89,6 @@ int inc_speed(Servo motor, int max, int& speed){ //increase speed fast. Note: cw
     }
   }
   else{
-//    if (speed <= max){
-//      motor.write(max);
-//      speed = max; 
-//      return speed; 
-//    }
     //Case 1: speed already < 90
     if(speed <= 90){
       speed -= FAST_INC;   
@@ -150,6 +152,8 @@ void rise_right(){
 
 //Set up and main loop 
 void setup() {
+   pinMode(pResistor, INPUT);// Set pResistor - A0 pin as an input (optional)
+
   // put your setup code here, to run once:
   back_right.attach(BACK_RIGHT_PIN);
   back_left.attach(BACK_LEFT_PIN);
@@ -200,6 +204,8 @@ void setup() {
 
 void loop() {
    ps2x.read_gamepad(false, vibrate);
+   value = analogRead(pResistor);
+
    if(ps2x.ButtonPressed(PSB_START)) use_controller = true; 
 
    if(!use_controller){
@@ -218,9 +224,11 @@ void loop() {
           move_backwards(); 
        }
        if(ps2x.Analog(PSS_RX) == byte(0)){
+       //if(value < 600){   
           turn_left();  //hard left     
        }
        if(ps2x.Analog(PSS_RX) == byte(255)){
+       //if(value > 750){  
           turn_right();  //hard right
        }
     }
@@ -230,7 +238,7 @@ void loop() {
        Serial.print(",");
        Serial.println(ps2x.Analog(PSS_LY), DEC); 
 #endif
-   
+      
       if(ps2x.Analog(PSS_LY) == byte(0)){
        // Serial.println("RISING"); 
         rise();
