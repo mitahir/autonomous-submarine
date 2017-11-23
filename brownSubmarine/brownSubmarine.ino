@@ -27,6 +27,9 @@
 #define MIN_CW  80
 #define STOP    90
 
+//GLOBAL VARIABLE START PROGRAM
+bool start_program = false; 
+
 //Global Variables Motors & Controller
 Servo back_right; 
 Servo back_left; 
@@ -61,7 +64,7 @@ float yaw_adjusted = 360; //set to 360
 MS5803 sensor(ADDRESS_HIGH);
 double pressure_abs;
 double base_altitude = 1655.0; // Altitude of SparkFun's HQ in Boulder, CO. in (m)
-double init_pressure;
+double init_pressure = 0;
 
 // Pressure Sensor Autonomous Variables
 bool CROSSED_OBS1 = false;
@@ -267,154 +270,165 @@ void setup() {
   sensor.reset();
   sensor.begin();
   
-  pressure_baseline = sensor.getPressure(ADC_4096);
+  init_pressure = sensor.getPressure(ADC_4096); 
   // ----------------------------------- //
   
   Serial.println("Initialized Shaheen One"); 
 } 
 
-void loop() {
-// ----- Photo Resistor ------ //
-  photoresistorValue = analogRead(photoresistorPin);
-  Serial.print("Light Sensor value is: ");
-  Serial.println(photoresistorValue);
+void loop() {       
 
 // ----- Controller Code ----- //  
    ps2x.read_gamepad(false, vibrate);
-   if(ps2x.ButtonPressed(PSB_START)) use_controller = true; 
-   if(ps2x.ButtonPressed(PSB_PINK)) init_pressure = sensor.getPressure(ADC_4096); 
-
-// ----- Main code ------ //
-  if(!use_controller){ //autonomous code 
-    // -------  PRESSURE CODE ------------------ // 
-    pressure_abs = sensor.getPressure(ADC_4096);
-
-    double pressure_change = pressure_abs - init_pressure; 
-    double max_allowable = -1; 
-    double min_allowable = 100000;
-     
-    if(!CROSSED_OBS1){
-       max_allowable = OBS1_MAX;
-       min_allowable = OBS1_MIN;
-    }
-    else if(!CROSSED_OBS2){
-       max_allowable = OBS2_MAX;
-       min_allowable = OBS2_MIN;      
-    }
-    else if(!CROSSED_OBS3){
-       max_allowable = OBS3_MAX;
-       min_allowable = OBS3_MIN;  
-    }
-    else{ // everything is done, just land
-        max_allowable = GROUND; 
-        min_allowable = GROUND; 
-    }
+   if(ps2x.ButtonPressed(PSB_START)){
+    setup();
     
-    if(pressure_change > max_allowable){ //the submarine is too far down, move up
-      turn_off(back_left, speed_back_left, back_right, speed_back_right); 
-      elevation_acheived = false; 
-      rise(); 
-    }
-    else if(pressure_change < min_allowable) { //pressure_change < OBS1_MIN move down, too far up 
-      turn_off(back_left, speed_back_left, back_right, speed_back_right); 
-      elevation_acheived = false; 
-      descend();   
-    }
-    else{
-      turn_off(front_right, speed_front_right, front_left, speed_front_left); 
-      elevation_acheived = true;   
-    }    
-  // ---------- END OF PRESSURE CODE -------------- //
+    //inital pressure value 
+    start_program = true; 
+  }     
+    Serial.print("Yaw: ");
+    Serial.println(yaw);
+  
+  // ----- Main code ------ //
+  if(start_program){
+    if(ps2x.ButtonPressed(PSB_PINK)) use_controller = true; 
     
-    if(elevation_acheived){
-      // IMU values 
-      sensors_event_t event; 
-      bno.getEvent(&event);    
-    
-      yaw = event.orientation.x;
-      pitch = event.orientation.y;
-      roll = event.orientation.z;  
-
+    if(!use_controller){ //autonomous code 
+      // -------  PRESSURE CODE ------------------ // 
+      pressure_abs = sensor.getPressure(ADC_4096);
+         
+      double pressure_change = pressure_abs - init_pressure; 
+      double max_allowable = -1; 
+      double min_allowable = 100000;
+       
       if(!CROSSED_OBS1){
-         if (){
-            turn_right();
-         }
-    
-        
-        
+         max_allowable = OBS1_MAX;
+         min_allowable = OBS1_MIN;
       }
       else if(!CROSSED_OBS2){
-        
-        
-        
+         max_allowable = OBS2_MAX;
+         min_allowable = OBS2_MIN;      
       }
       else if(!CROSSED_OBS3){
-        
-        
+         max_allowable = OBS3_MAX;
+         min_allowable = OBS3_MIN;  
+      }
+      else{ // everything is done, just land
+          max_allowable = GROUND; 
+          min_allowable = GROUND; 
+      }
+      
+      if(pressure_change > max_allowable){ //the submarine is too far down, move up
+        turn_off(back_left, speed_back_left, back_right, speed_back_right); 
+        elevation_acheived = false; 
+        rise(); 
+      }
+      else if(pressure_change < min_allowable) { //pressure_change < OBS1_MIN move down, too far up 
+        turn_off(back_left, speed_back_left, back_right, speed_back_right); 
+        elevation_acheived = false; 
+        descend();   
       }
       else{
+        turn_off(front_right, speed_front_right, front_left, speed_front_left); 
+        elevation_acheived = true;   
+      }    
+    // ---------- END OF PRESSURE CODE -------------- //
+      
+      if(elevation_acheived){
+        // IMU values 
+        sensors_event_t event; 
+        bno.getEvent(&event);    
+      
+        yaw = event.orientation.x;
+        pitch = event.orientation.y;
+        roll = event.orientation.z;  
         
-        
-      }
-    }
+        // ----- Photo Resistor ------ //
+        photoresistorValue = analogRead(photoresistorPin);
+        Serial.print("Light Sensor value is: ");
+        Serial.println(photoresistorValue);
   
-  } // end autonomous code 
-  else{ //controller code 
-    if(ps2x.Button(PSB_R1)){ //take inputs from both the sticks
-#ifdef debug
-       Serial.print(ps2x.Analog(PSS_RX),DEC); 
-       Serial.print(",");
-       Serial.println(ps2x.Analog(PSS_RY), DEC); 
-#endif 
-       if(ps2x.Analog(PSS_RY) == byte(0)){ //move forwards
-          move_forwards();
-       }
-       if(ps2x.Analog(PSS_RY) == byte(255)){
-          move_backwards(); 
-       }
-       if(ps2x.Analog(PSS_RX) == byte(0)){
-          turn_left();  //hard left     
-       }
-       if(ps2x.Analog(PSS_RX) == byte(255)){
-          turn_right();  //hard right
-       }
-    }
-    if(ps2x.Button(PSB_L1)){
-#ifdef debug
-       Serial.print(ps2x.Analog(PSS_LX),DEC); 
-       Serial.print(",");
-       Serial.println(ps2x.Analog(PSS_LY), DEC); 
-#endif
-   
-      if(ps2x.Analog(PSS_LY) == byte(0)){
-       // Serial.println("RISING"); 
-        rise();
-        }   
-      if(ps2x.Analog(PSS_LY) == byte(255)){
-       // Serial.println("DESCENDING");
-        descend(); 
+        if(!CROSSED_OBS1){
+           if (yaw<55){
+              turn_right();
+           }
+      
+          
+          
         }
-      if(ps2x.Analog(PSS_RX) == byte(0)){
-        //increase the left side motor to work faster
-        rise_left(); 
+        else if(!CROSSED_OBS2){
+          
+          
+          
         }
-      if(ps2x.Analog(PSS_RX) == byte(255)){
-        //increase the front right motor speed
-        rise_right(); 
+        else if(!CROSSED_OBS3){
+          
+          
         }
-       
-    }
-    if(ps2x.ButtonReleased(PSB_R1)){
-       speed_back_right = 90;
-       back_right.write(90); 
-       speed_back_left = 90;
-       back_left.write(90);  
-    }
-    if(ps2x.ButtonReleased(PSB_L1)){
-       speed_front_right = 90;
-       front_right.write(90); 
-       speed_front_left = 90;
-       front_left.write(90);  
+        else{
+          
+          
+        }
+      }
+    
+    } // end autonomous code 
+    else{ //controller code 
+      if(ps2x.Button(PSB_R1)){ //take inputs from both the sticks
+  #ifdef debug
+         Serial.print(ps2x.Analog(PSS_RX),DEC); 
+         Serial.print(",");
+         Serial.println(ps2x.Analog(PSS_RY), DEC); 
+  #endif 
+         if(ps2x.Analog(PSS_RY) == byte(0)){ //move forwards
+            move_forwards();
+         }
+         if(ps2x.Analog(PSS_RY) == byte(255)){
+            move_backwards(); 
+         }
+         if(ps2x.Analog(PSS_RX) == byte(0)){
+            turn_left();  //hard left     
+         }
+         if(ps2x.Analog(PSS_RX) == byte(255)){
+            turn_right();  //hard right
+         }
+      }
+      if(ps2x.Button(PSB_L1)){
+  #ifdef debug
+         Serial.print(ps2x.Analog(PSS_LX),DEC); 
+         Serial.print(",");
+         Serial.println(ps2x.Analog(PSS_LY), DEC); 
+  #endif
+     
+        if(ps2x.Analog(PSS_LY) == byte(0)){
+         // Serial.println("RISING"); 
+          rise();
+          }   
+        if(ps2x.Analog(PSS_LY) == byte(255)){
+         // Serial.println("DESCENDING");
+          descend(); 
+          }
+        if(ps2x.Analog(PSS_RX) == byte(0)){
+          //increase the left side motor to work faster
+          rise_left(); 
+          }
+        if(ps2x.Analog(PSS_RX) == byte(255)){
+          //increase the front right motor speed
+          rise_right(); 
+          }
+         
+      }
+      if(ps2x.ButtonReleased(PSB_R1)){
+         speed_back_right = 90;
+         back_right.write(90); 
+         speed_back_left = 90;
+         back_left.write(90);  
+      }
+      if(ps2x.ButtonReleased(PSB_L1)){
+         speed_front_right = 90;
+         front_right.write(90); 
+         speed_front_left = 90;
+         front_left.write(90);  
+      }
     }
   }
 }
