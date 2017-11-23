@@ -91,12 +91,15 @@ bool elevation_acheived = false;
 const int OBS1_IMU_ANGLE = 300;
 const int TOLERANCE = 5;
 const int OBS2_IMU_ANGLE = 0;
-const int TIME_OBS2 = 100000; //ms  
+const int TIME_OBS2 = 100000; //ms
+int align_to_zero = 0;  
 
 //Timer functions
 unsigned long start_time = millis();
 unsigned long elapsed_time = 0;
 unsigned long current_time = 0;
+int total_time_forward = 0;
+int OBS1_TOTAL_TIME = 0;
 int total_time = 0;
 
 int OBS1_TIME_MOVE_FORWARD = 2000;
@@ -362,40 +365,64 @@ void loop() {
         //Serial.println(photoresistorValue);
   
         if(!CROSSED_OBS1){
-         if (yaw <= (OBS1_IMU_ANGLE - TOLERANCE) && yaw>=120){ //245 < yaw < 360, 0 < yaw < 55
-          //if sub is facing left
+         if ((yaw <= (OBS1_IMU_ANGLE - TOLERANCE) && yaw>=120) && align_to_zero==0){ //245 < yaw < 360, 0 < yaw < 55
             turn_right();
-            Serial.print("Right");
+            Serial.print(" Right");
          }
 
-         if( (yaw >= (OBS1_IMU_ANGLE + TOLERANCE) && (yaw <= 360))|| (yaw>0 && yaw<120)){
-          // if sub is facing right   
+         if( ((yaw >= (OBS1_IMU_ANGLE + TOLERANCE) && (yaw <= 360))|| (yaw>0 && yaw<120))&& align_to_zero == 0){
+            Serial.print(" Left");
             turn_left();
-            Serial.print("Left");
+            
          }
-         if((yaw>(OBS1_IMU_ANGLE - TOLERANCE) && yaw<(OBS1_IMU_ANGLE + TOLERANCE)) && total_time<OBS1_TIME_MOVE_FORWARD){
+         if( align_to_zero == 0 &&(yaw>(OBS1_IMU_ANGLE - TOLERANCE) && yaw<(OBS1_IMU_ANGLE + TOLERANCE))){
              //current_time = millis();
-             Serial.print("Forwards");
+             Serial.print(" Forwards");
              move_forwards();
              delay(200);
-             total_time+=200;
+             total_time_forward+=200;
+             OBS1_TOTAL_TIME+=200;
+             if(OBS1_TOTAL_TIME>=5000){
+              CROSSED_OBS1 = 1;
+              Serial.println("Exiting OBSC1");
+             }
              //total_time += ((millis())-current_time); 
              Serial.print(" Time: ");
-             Serial.println(total_time);
+             Serial.println(total_time_forward);
          }
 
-         if(total_time >= OBS1_TIME_MOVE_FORWARD){
-             total_time = 0;
-             while( yaw>=290 && yaw<=360 ){
+         if(total_time_forward >= OBS1_TIME_MOVE_FORWARD){
+             align_to_zero = 1;
+             if( yaw>=270 && yaw<=360){
               turn_right();
-              Serial.println("Yaw aligning.");
-             }
-             if(photoresistorValue >= PHOTO_RESISTOR_THRESHOLD){
-              turn_right();
-             }
+              Serial.print("Yaw aligning:  ");
+              Serial.println( yaw );
+             } else {
+              align_to_zero = 0;
+              total_time_forward = 0;
+              turn_off(back_left, speed_back_left, back_right, speed_back_right);
+              delay(300);
+             }   
          }
+         
+         if(photoresistorValue >= PHOTO_RESISTOR_THRESHOLD){  
+              //while(photoresistorValue >= PHOTO_RESISTOR_THRESHOLD){
+                for(int i=0; i<4; i++){
+                  back_right.write(90);//dec_speed(back_right, speed_back_right);//(back_right, speed_back_right, back_right, speed_back_right);
+                  delay(100);
+                  turn_right();
+                  Serial.print(" Photoresistor turn right.");
+                  Serial.println(photoresistorValue);
+                  delay(200);
+                }
+                
+              //}
+              
+              //align_to_zero = 1;
+         } 
       }
       else if(!CROSSED_OBS2){
+        Serial.println("2222222222222222222222");
         //programming for Obstacle 2 assuming it is already aligned. 
         if(photoresistorValue >= PHOTO_RESISTOR_THRESHOLD){
         //the submarine is too close to the wall, move away 
