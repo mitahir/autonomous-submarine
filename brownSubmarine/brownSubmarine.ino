@@ -88,11 +88,19 @@ double OBS2_WIDTH = 38;
 bool elevation_acheived = false; 
 
 // IMU VALUES Autonomous Variables 
+const int OBS1_IMU_ANGLE = 300;
+const int TOLERANCE = 5;
 
+//Timer functions
+unsigned long start_time = millis();
+unsigned long elapsed_time = 0;
+unsigned long current_time = 0;
+int total_time = 0;
 
+int OBS1_TIME_MOVE_FORWARD = 2000;
+int PHOTO_RESISTOR_THRESHOLD = 600;
 
 //Helper Functions MOTORS 
-
 int dec_speed(Servo motor, int& speed){
   if(abs(90 - speed) <= FAST_DEC){
     motor.write(speed);
@@ -348,20 +356,40 @@ void loop() {
         
         // ----- Photo Resistor ------ //
         photoresistorValue = analogRead(photoresistorPin);
-        Serial.print("Light Sensor value is: ");
-        Serial.println(photoresistorValue);
+        //Serial.print("Light Sensor value is: ");
+        //Serial.println(photoresistorValue);
   
         if(!CROSSED_OBS1){
-         if ((yaw>=245 && yaw<=360) || (yaw>=0 && yaw<=55)){
+         if (yaw <= (OBS1_IMU_ANGLE - TOLERANCE) && yaw>=120){ //245 < yaw < 360, 0 < yaw < 55
             turn_right();
+            Serial.print(" Right");
          }
 
-         if(yaw >= 65 && yaw<245){
+         if( (yaw >= (OBS1_IMU_ANGLE + TOLERANCE) && (yaw <= 360))|| (yaw>0 && yaw<120)){
+            Serial.print(" Left");
             turn_left();
+            
+         }
+         if((yaw>(OBS1_IMU_ANGLE - TOLERANCE) && yaw<(OBS1_IMU_ANGLE + TOLERANCE)) && total_time<OBS1_TIME_MOVE_FORWARD){
+             //current_time = millis();
+             Serial.print(" Forwards");
+             move_forwards();
+             delay(200);
+             total_time+=200;
+             //total_time += ((millis())-current_time); 
+             Serial.print(" Time: ");
+             Serial.println(total_time);
          }
 
-         if(yaw>55 && yaw<65){
-              move_forwards();
+         if(total_time >= OBS1_TIME_MOVE_FORWARD){
+             total_time = 0;
+             while( yaw>=290 && yaw<=360 ){
+              turn_right();
+              Serial.println("Yaw aligning.");
+             }
+             if(photoresistorValue >= PHOTO_RESISTOR_THRESHOLD){
+              turn_right();
+             }
          }
     
         
