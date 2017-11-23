@@ -8,6 +8,7 @@
 
 
 #define debug 1
+//#define PRESSURE_TESTING
 
 //Define the pins 
 #define FAST_INC  10
@@ -295,6 +296,7 @@ void loop() {
     
     if(!use_controller){ //autonomous code 
       // -------  PRESSURE CODE ------------------ // 
+      #ifdef PRESSURE_TESTING
       pressure_abs = sensor.getPressure(ADC_4096);
          
       double pressure_change = pressure_abs - init_pressure; 
@@ -332,9 +334,10 @@ void loop() {
         turn_off(front_right, speed_front_right, front_left, speed_front_left); 
         elevation_acheived = true;   
       }    
+      #endif
     // ---------- END OF PRESSURE CODE -------------- //
-      
-      if(elevation_acheived){
+      if(true){
+      //if(elevation_acheived){
         // IMU values 
         sensors_event_t event; 
         bno.getEvent(&event);    
@@ -349,13 +352,21 @@ void loop() {
         Serial.println(photoresistorValue);
   
         if(!CROSSED_OBS1){
-           if (yaw<55){
-              turn_right();
-           }
-      
-          
-          
-        }
+         if ((yaw>=245 && yaw<=360) || (yaw>=0 && yaw<=55)){
+            turn_right();
+         }
+
+         if(yaw >= 65 && yaw<245){
+            turn_left();
+         }
+
+         if(yaw>55 && yaw<65){
+              move_forwards();
+         }
+    
+        
+        
+      }
         else if(!CROSSED_OBS2){
           
           
