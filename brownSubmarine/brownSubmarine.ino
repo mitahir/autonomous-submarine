@@ -90,6 +90,8 @@ bool elevation_acheived = false;
 // IMU VALUES Autonomous Variables 
 const int OBS1_IMU_ANGLE = 300;
 const int TOLERANCE = 5;
+const int OBS2_IMU_ANGLE = 0;
+const int TIME_OBS2 = 100000; //ms  
 
 //Timer functions
 unsigned long start_time = millis();
@@ -361,18 +363,19 @@ void loop() {
   
         if(!CROSSED_OBS1){
          if (yaw <= (OBS1_IMU_ANGLE - TOLERANCE) && yaw>=120){ //245 < yaw < 360, 0 < yaw < 55
+          //if sub is facing left
             turn_right();
-            Serial.print(" Right");
+            Serial.print("Right");
          }
 
          if( (yaw >= (OBS1_IMU_ANGLE + TOLERANCE) && (yaw <= 360))|| (yaw>0 && yaw<120)){
-            Serial.print(" Left");
+          // if sub is facing right   
             turn_left();
-            
+            Serial.print("Left");
          }
          if((yaw>(OBS1_IMU_ANGLE - TOLERANCE) && yaw<(OBS1_IMU_ANGLE + TOLERANCE)) && total_time<OBS1_TIME_MOVE_FORWARD){
              //current_time = millis();
-             Serial.print(" Forwards");
+             Serial.print("Forwards");
              move_forwards();
              delay(200);
              total_time+=200;
@@ -391,24 +394,46 @@ void loop() {
               turn_right();
              }
          }
-    
+      }
+      else if(!CROSSED_OBS2){
+        //programming for Obstacle 2 assuming it is already aligned. 
+        if(photoresistorValue >= PHOTO_RESISTOR_THRESHOLD){
+        //the submarine is too close to the wall, move away 
+          turn_right(); 
+        }
+        else{ //the submarine is not too far away, check the yaws 
+          if (yaw <= (OBS2_IMU_ANGLE - TOLERANCE) && yaw>=120){ //245 < yaw < 360, 0 < yaw < 55
+          //if sub is facing left
+            turn_right();
+            Serial.print("Right");
+         }
+
+         else if( (yaw >= (OBS2_IMU_ANGLE + TOLERANCE) && (yaw <= 360))|| (yaw>0 && yaw<120)){
+          // if sub is facing right   
+            turn_left();
+            Serial.print("Left");
+         }
+
+         else{
+            move_forwards();
+            delay(200);
+            total_time += 200; 
+
+            if(total_time >= TIME_OBS2){
+              CROSSED_OBS2 = true;   
+            }
+         }        
+        }
+      }
+      else if(!CROSSED_OBS3){
         
         
       }
-        else if(!CROSSED_OBS2){
-          
-          
-          
-        }
-        else if(!CROSSED_OBS3){
-          
-          
-        }
-        else{
-          
-          
-        }
+      else{
+        
+        
       }
+    }
     
     } // end autonomous code 
     else{ //controller code 
