@@ -504,6 +504,10 @@ void loop() {
                  move_forwards();
                  delay(200);
               }
+              else if(CURRENT_TIME_OBS2 > 7500){
+                turn_off(back_left, speed_back_left, back_right, speed_back_right);
+                CROSSED_OBS2 = true; 
+              }
            }
            
 //        Serial.println("2222222222222222222222");
