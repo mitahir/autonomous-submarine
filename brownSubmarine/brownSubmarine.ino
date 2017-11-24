@@ -72,13 +72,13 @@ bool CROSSED_OBS1 = false;
 bool CROSSED_OBS2 = false; 
 bool CROSSED_OBS3 = false; 
 
-double OBS1_MAX = 100;
-double OBS1_MIN = -100;
-double OBS2_MIN = 100;
-double OBS2_MAX = -100;
-double OBS3_MIN = 0;
-double OBS3_MAX = 0; 
-double GROUND = 0; 
+double OBS1_MAX = 104.17; //clearance of 8in, 40in-50in range allowed for pressure 
+double OBS1_MIN = 83.33;
+double OBS2_MIN = 57.3;
+double OBS2_MAX = 25;
+double OBS3_MIN = 25;
+double OBS3_MAX = 104.17; 
+double POOL_BOTTOM = 120.8; 
 
 double OBS1_DISTANCE = 72;
 double OBS2_DISTANCE = 144;
@@ -354,8 +354,8 @@ void loop() {
          min_allowable = OBS3_MIN;  
       }
       else{ // everything is done, just land
-          max_allowable = GROUND; 
-          min_allowable = GROUND; 
+          max_allowable = POOL_BOTTOM; 
+          min_allowable = POOL_BOTTOM; 
       }
       
       if(pressure_change >= max_allowable){ //the submarine is too far down, move up
