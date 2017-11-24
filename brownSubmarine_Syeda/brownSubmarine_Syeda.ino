@@ -8,7 +8,7 @@
 
 
 #define debug 1
-#define PRESSURE_TESTING
+//#define PRESSURE_TESTING
 
 //Define the pins 
 #define FAST_INC  10
@@ -72,10 +72,10 @@ bool CROSSED_OBS1 = false;
 bool CROSSED_OBS2 = false; 
 bool CROSSED_OBS3 = false; 
 
-double OBS1_MAX = 100;
-double OBS1_MIN = -100;
-double OBS2_MIN = 100;
-double OBS2_MAX = -100;
+double OBS1_MAX = 0;
+double OBS1_MIN = 0;
+double OBS2_MIN = 0;
+double OBS2_MAX = 0;
 double OBS3_MIN = 0;
 double OBS3_MAX = 0; 
 double GROUND = 0; 
@@ -91,22 +91,16 @@ bool elevation_acheived = false;
 const int OBS1_IMU_ANGLE = 300;
 const int TOLERANCE = 5;
 const int OBS2_IMU_ANGLE = 0;
-const int TIME_OBS2 = 100000; //ms
-int align_to_zero = 0;  
+const int TIME_OBS2 = 100000; //ms  
 
 //Timer functions
 unsigned long start_time = millis();
 unsigned long elapsed_time = 0;
 unsigned long current_time = 0;
-int total_time_forward = 0;
-int OBS1_TOTAL_TIME = 0;
 int total_time = 0;
 
-int OBS1_TIME_MOVE_FORWARD = 6000;
-int TIME_TO_CROSS_FIRST_OBSTACLE = 8000;
+int OBS1_TIME_MOVE_FORWARD = 2000;
 int PHOTO_RESISTOR_THRESHOLD = 600;
-int MOVE_FORWARD_OBS1 = 0;
-int CURRENT_MOVE_FORWARD_OBS1 = 0;
 
 //Helper Functions MOTORS 
 int dec_speed(Servo motor, int& speed){
@@ -189,15 +183,13 @@ void descend(){
 }
 
 void turn_left(){ //assuming hard left
-  Serial.println("LEFT");
-  inc_speed(back_left, MAX_CW, speed_back_left); //MAX_CW
+  dec_speed(back_left, speed_back_left); //MAX_CW
   inc_speed(back_right, MAX_CW, speed_back_right); //move forwards 
 }
 
 void turn_right(){ //assuming hard right 
-    Serial.println("RIGHT");
   inc_speed(back_left, MAX_CCW, speed_back_left);
-  inc_speed(back_right, MAX_CCW, speed_back_right); //MAX_CCW
+  dec_speed(back_right, speed_back_right); //MAX_CCW
 }
 
 void rise_left(){
@@ -211,18 +203,16 @@ void rise_right(){
 }
 
 //turn off motors function
-void turn_off(Servo motor1, int &speed1, Servo motor2, int &speed2){
-  motor1.write(STOP); 
-  motor2.write(STOP);
-  speed1 = STOP;
-  speed2 = STOP;
+void turn_off(Servo motor1, int speed1, Servo motor2, int speed2){
+  dec_speed(motor1, speed1);
+  dec_speed(motor2, speed2);   
 }
 
 //Set up and main loop 
 void setup() {
   //Start of Setup
   Serial.begin(38400); //9600 for motors, need 57600 for the controller though
-  use_controller = false;
+
 
   // -------- PIN INITIALIZATIONS ------// 
   // Motors
@@ -307,37 +297,19 @@ void loop() {
     //inital pressure value 
     start_program = true; 
   }     
-   
+    Serial.print("Yaw: ");
+    Serial.println(yaw);
+  
   // ----- Main code ------ //
   if(start_program){
-
-    if(ps2x.ButtonPressed(PSB_PINK)){
-      back_left.write(STOP);
-      back_right.write(STOP);
-      front_left.write(STOP);
-      front_right.write(STOP);
-      speed_front_left = STOP;
-      speed_front_right = STOP;
-      speed_back_left = STOP;
-      speed_back_right = STOP;
-      use_controller = true; 
-    }
+    if(ps2x.ButtonPressed(PSB_PINK)) use_controller = true; 
     
     if(!use_controller){ //autonomous code 
-     sensors_event_t event; 
-     bno.getEvent(&event);    
-      
-     yaw = event.orientation.x;
-     pitch = event.orientation.y;
-     roll = event.orientation.z;  
-    
       // -------  PRESSURE CODE ------------------ // 
       #ifdef PRESSURE_TESTING
       pressure_abs = sensor.getPressure(ADC_4096);
          
       double pressure_change = pressure_abs - init_pressure; 
-//      Serial.print("Pressure change: ");
-//      Serial.println(pressure_change);
       double max_allowable = -1; 
       double min_allowable = 100000;
        
@@ -358,34 +330,26 @@ void loop() {
           min_allowable = GROUND; 
       }
       
-      if(pressure_change >= max_allowable){ //the submarine is too far down, move up
+      if(pressure_change > max_allowable){ //the submarine is too far down, move up
         turn_off(back_left, speed_back_left, back_right, speed_back_right); 
         elevation_acheived = false; 
-        if(pitch > 45){
-          turn_off(front_left, speed_front_left, front_right, speed_front_right); 
-          delay(300);
-        }
-        Serial.println("RISE");
         rise(); 
       }
-      else if(pressure_change <= min_allowable) { //pressure_change < OBS1_MIN move down, too far up 
+      else if(pressure_change < min_allowable) { //pressure_change < OBS1_MIN move down, too far up 
         turn_off(back_left, speed_back_left, back_right, speed_back_right); 
         elevation_acheived = false; 
-        Serial.println("DESCEND");
         descend();   
       }
-      else if(pressure_change>min_allowable && pressure_change < max_allowable){
+      else{
         turn_off(front_right, speed_front_right, front_left, speed_front_left); 
-//        Serial.println("ELEVATION GOOD");
         elevation_acheived = true;   
       }    
       #endif
     // ---------- END OF PRESSURE CODE -------------- //
-      //if(true){
-      if(elevation_acheived){
-        turn_off(front_right, speed_front_right, front_left, speed_front_left); 
+      if(true){
+      //if(elevation_acheived){
         // IMU values 
-        //sensors_event_t event; 
+        sensors_event_t event; 
         bno.getEvent(&event);    
       
         yaw = event.orientation.x;
@@ -398,105 +362,68 @@ void loop() {
         //Serial.println(photoresistorValue);
   
         if(!CROSSED_OBS1){
-         if ((yaw <= (OBS1_IMU_ANGLE - TOLERANCE) && yaw>=120) && align_to_zero==0){ //245 < yaw < 360, 0 < yaw < 55
+         if (yaw <= (OBS1_IMU_ANGLE - TOLERANCE) && yaw>=120){ //245 < yaw < 360, 0 < yaw < 55
+          //if sub is facing left
             turn_right();
-            Serial.print(" Right");
+            Serial.print("Right");
          }
 
-         if( ((yaw >= (OBS1_IMU_ANGLE + TOLERANCE) && (yaw <= 360))|| (yaw>0 && yaw<120))&& align_to_zero == 0){
-            Serial.print(" Left");
+         if( (yaw >= (OBS1_IMU_ANGLE + TOLERANCE) && (yaw <= 360))|| (yaw>0 && yaw<120)){
+          // if sub is facing right   
             turn_left();
-            
+            Serial.print("Left");
          }
-         if( align_to_zero == 0 &&(yaw>(OBS1_IMU_ANGLE - TOLERANCE) && yaw<(OBS1_IMU_ANGLE + TOLERANCE))){
+         if((yaw>(OBS1_IMU_ANGLE - TOLERANCE) && yaw<(OBS1_IMU_ANGLE + TOLERANCE)) && total_time<OBS1_TIME_MOVE_FORWARD){
              //current_time = millis();
-             Serial.print(" Forwards");
+             Serial.print("Forwards");
              move_forwards();
              delay(200);
-             total_time_forward+=200;
-             OBS1_TOTAL_TIME+=200;
-//             if(OBS1_TOTAL_TIME>=TIME_TO_CROSS_FIRST_OBSTACLE){
-//              CROSSED_OBS1 = 1;
-//              Serial.println("Exiting OBSC1");
-//             }
+             total_time+=200;
              //total_time += ((millis())-current_time); 
              Serial.print(" Time: ");
-             Serial.println(total_time_forward);
+             Serial.println(total_time);
          }
 
-         if(total_time_forward >= OBS1_TIME_MOVE_FORWARD){
-             align_to_zero = 1;
-             if( yaw>=270 && yaw<=360){
+         if(total_time >= OBS1_TIME_MOVE_FORWARD){
+             total_time = 0;
+             while( yaw>=290 && yaw<=360 ){
               turn_right();
-              Serial.print("Yaw aligning:  ");
-              Serial.println( yaw );
-             } else {
-              align_to_zero = 0;
-              total_time_forward = 0;
-              turn_off(back_left, speed_back_left, back_right, speed_back_right);
-              delay(300);
-              MOVE_FORWARD_OBS1 = 1;
-             }   
+              Serial.println("Yaw aligning.");
+             }
+             if(photoresistorValue >= PHOTO_RESISTOR_THRESHOLD){
+              turn_right();
+             }
          }
-
-         if (MOVE_FORWARD_OBS1){
-           move_forwards();
-           delay(200);
-           CURRENT_MOVE_FORWARD_OBS1+=200;
-           if (CURRENT_MOVE_FORWARD_OBS1 > MOVE_FORWARD_OBS1){
-            turn_off(back_left, speed_back_left, back_right, speed_back_right);
-             Serial.println("Forwards to OBS2");
-             CROSSED_OBS1 = 1;
-           }
-           
-         }
-         
-         if(photoresistorValue >= PHOTO_RESISTOR_THRESHOLD){  
-              //while(photoresistorValue >= PHOTO_RESISTOR_THRESHOLD){
-//                for(int i=0; i<4; i++){
-//                  back_right.write(90);//dec_speed(back_right, speed_back_right);//(back_right, speed_back_right, back_right, speed_back_right);
-//                  delay(100);
-//                  turn_right();
-//                  Serial.print(" Photoresistor turn right.");
-//                  Serial.println(photoresistorValue);
-//                  delay(200);
-//                }
-                
-              //}
-              
-              //align_to_zero = 1;
-         } 
       }
       else if(!CROSSED_OBS2){
-//        Serial.println("2222222222222222222222");
-//        //programming for Obstacle 2 assuming it is already aligned. 
-//        if(photoresistorValue >= PHOTO_RESISTOR_THRESHOLD){
-//        //the submarine is too close to the wall, move away 
-//          turn_right(); 
-//        }
-//        else{ //the submarine is not too far away, check the yaws 
-//          if (yaw <= (OBS2_IMU_ANGLE - TOLERANCE) && yaw>=120){ //245 < yaw < 360, 0 < yaw < 55
-//          //if sub is facing left
-//            turn_right();
-//            Serial.print("Right");
-//         }
-//
-//         else if( (yaw >= (OBS2_IMU_ANGLE + TOLERANCE) && (yaw <= 360))|| (yaw>0 && yaw<120)){
-//          // if sub is facing right   
-//            turn_left();
-//            Serial.print("Left");
-//         }
-//
-//         else{
-//            move_forwards();
-//            delay(200);
-//            total_time += 200; 
-//
-//            if(total_time >= TIME_OBS2){
-//              CROSSED_OBS2 = true;   
-//            }
-//         }        
-//        }
+        //programming for Obstacle 2 assuming it is already aligned. 
+        if(photoresistorValue >= PHOTO_RESISTOR_THRESHOLD){
+        //the submarine is too close to the wall, move away 
+          turn_right(); 
+        }
+        else{ //the submarine is not too far away, check the yaws 
+          if (yaw <= (OBS2_IMU_ANGLE - TOLERANCE) && yaw>=120){ //245 < yaw < 360, 0 < yaw < 55
+          //if sub is facing left
+            turn_right();
+            Serial.print("Right");
+         }
+
+         else if( (yaw >= (OBS2_IMU_ANGLE + TOLERANCE) && (yaw <= 360))|| (yaw>0 && yaw<120)){
+          // if sub is facing right   
+            turn_left();
+            Serial.print("Left");
+         }
+
+         else{
+            move_forwards();
+            delay(200);
+            total_time += 200; 
+
+            if(total_time >= TIME_OBS2){
+              CROSSED_OBS2 = true;   
+            }
+         }        
+        }
       }
       else if(!CROSSED_OBS3){
         
@@ -510,7 +437,6 @@ void loop() {
     
     } // end autonomous code 
     else{ //controller code 
-      Serial.println("CONTROLLER ACCESS");
       if(ps2x.Button(PSB_R1)){ //take inputs from both the sticks
   #ifdef debug
          Serial.print(ps2x.Analog(PSS_RX),DEC); 

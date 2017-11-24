@@ -131,13 +131,13 @@ void descend(){
 }
 
 void turn_left(){ //assuming hard left
-  dec_speed(back_left, speed_back_left); //MAX_CW
+  inc_speed(back_left, MAX_CW, speed_back_left); //MAX_CW
   inc_speed(back_right, MAX_CW, speed_back_right); //move forwards 
 }
 
 void turn_right(){ //assuming hard right 
   inc_speed(back_left, MAX_CCW, speed_back_left);
-  dec_speed(back_right, speed_back_right); //MAX_CCW
+  inc_speed(back_right, MAX_CCW, speed_back_right); //MAX_CCW
 }
 
 void rise_left(){
@@ -206,7 +206,7 @@ void loop() {
    ps2x.read_gamepad(false, vibrate);
    value = analogRead(pResistor);
 
-   if(ps2x.ButtonPressed(PSB_START)) use_controller = true; 
+   if(ps2x.ButtonPressed(PSB_PINK)) use_controller = true; 
 
    if(!use_controller){
   }
