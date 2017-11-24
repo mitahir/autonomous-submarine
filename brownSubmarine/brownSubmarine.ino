@@ -108,6 +108,8 @@ int PHOTO_RESISTOR_THRESHOLD = 600;
 int MOVE_FORWARD_OBS1 = 0;
 int CURRENT_MOVE_FORWARD_OBS1 = 0;
 
+int CURRENT_TIME_OBS2 = 0; //global variable
+
 //Helper Functions MOTORS 
 int dec_speed(Servo motor, int& speed){
   if(abs(90 - speed) <= FAST_DEC){
@@ -488,6 +490,22 @@ void loop() {
          } 
       }
       else if(!CROSSED_OBS2){
+          if(yaw<357 && yaw>180){
+              turn_right();
+           }
+  
+           if(yaw>3 && yaw<=180){
+              turn_left();
+           }
+        
+           if((yaw>=357 && yaw<=360) || (yaw>=0 && yaw<=3) ){
+              CURRENT_TIME_OBS2+=200;
+              if(CURRENT_TIME_OBS2<7500){
+                 move_forwards();
+                 delay(200);
+              }
+           }
+           
 //        Serial.println("2222222222222222222222");
 //        //programming for Obstacle 2 assuming it is already aligned. 
 //        if(photoresistorValue >= PHOTO_RESISTOR_THRESHOLD){
