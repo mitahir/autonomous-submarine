@@ -108,6 +108,8 @@ int PHOTO_RESISTOR_THRESHOLD = 600;
 int MOVE_FORWARD_OBS1 = 0;
 int CURRENT_MOVE_FORWARD_OBS1 = 0;
 
+int CURRENT_TIME_OBS2 = 0; //global variable
+
 //Helper Functions MOTORS 
 int dec_speed(Servo motor, int& speed){
   if(abs(90 - speed) <= FAST_DEC){
@@ -443,11 +445,31 @@ void loop() {
            move_forwards();
            delay(200);
            CURRENT_MOVE_FORWARD_OBS1+=200;
-           if (CURRENT_MOVE_FORWARD_OBS1 > MOVE_FORWARD_OBS1){
+           align_to_zero = 1;
+           if (CURRENT_MOVE_FORWARD_OBS1 > 2000){
             turn_off(back_left, speed_back_left, back_right, speed_back_right);
              Serial.println("Forwards to OBS2");
              CROSSED_OBS1 = 1;
+             Serial.print("OBS1 done MOVE FORWARDS: CURRENT_MOVE_FORWARD_OBS1= ");
+            Serial.print(CURRENT_MOVE_FORWARD_OBS1);
+             turn_off(back_left, speed_back_left, back_right, speed_back_right); 
            }
+
+           if(yaw<357 && yaw>180){
+            turn_right();
+           }
+
+           if(yaw>3 && yaw<=180){
+            turn_left();
+           }
+
+           if((yaw>=357 && yaw<=360) || (yaw>=0 && yaw<=3) ){
+            move_forwards();
+            Serial.print("OBS1 done MOVE FORWARDS: CURRENT_MOVE_FORWARD_OBS1= ");
+            Serial.print(CURRENT_MOVE_FORWARD_OBS1);
+ 
+           }
+           
            
          }
          
@@ -468,6 +490,22 @@ void loop() {
          } 
       }
       else if(!CROSSED_OBS2){
+          if(yaw<357 && yaw>180){
+              turn_right();
+           }
+  
+           if(yaw>3 && yaw<=180){
+              turn_left();
+           }
+        
+           if((yaw>=357 && yaw<=360) || (yaw>=0 && yaw<=3) ){
+              CURRENT_TIME_OBS2+=200;
+              if(CURRENT_TIME_OBS2<7500){
+                 move_forwards();
+                 delay(200);
+              }
+           }
+           
 //        Serial.println("2222222222222222222222");
 //        //programming for Obstacle 2 assuming it is already aligned. 
 //        if(photoresistorValue >= PHOTO_RESISTOR_THRESHOLD){
