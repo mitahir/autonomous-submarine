@@ -447,12 +447,13 @@ void loop() {
            CURRENT_MOVE_FORWARD_OBS1+=200;
            align_to_zero = 1;
            if (CURRENT_MOVE_FORWARD_OBS1 > 2000){
-            turn_off(back_left, speed_back_left, back_right, speed_back_right);
+            //turn_off(back_left, speed_back_left, back_right, speed_back_right);
              Serial.println("Forwards to OBS2");
              CROSSED_OBS1 = 1;
-             Serial.print("OBS1 done MOVE FORWARDS: CURRENT_MOVE_FORWARD_OBS1= ");
-            Serial.print(CURRENT_MOVE_FORWARD_OBS1);
-             turn_off(back_left, speed_back_left, back_right, speed_back_right); 
+             back_left.write(90);
+             delay(300);
+             back_right.write(90); 
+             delay(300);
            }
 
            if(yaw<357 && yaw>180){
