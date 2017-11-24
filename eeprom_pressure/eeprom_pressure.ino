@@ -37,9 +37,8 @@ float divider = 100.00;
 void setup() {
     Serial.begin(9600);
     
-    //Retrieve calibration constants for conversion math.
+    //Retrieve calibrssqaation constants for conversion math.
     sensor.reset();
-    sensor.begin();
     
     pressure_baseline = sensor.getPressure(ADC_4096);
 
@@ -78,19 +77,24 @@ void setup() {
 int n = 0;
 void loop() {
   ps2x.read_gamepad(false, vibrate);
+
+  if (ps2x.ButtonPressed(PSB_GREEN)){
+    pressure_baseline = sensor.getPressure(ADC_4096);
+  }
   
   // Read pressure from the sensor in mbar.
   if (ps2x.ButtonPressed(PSB_PINK)){
-//  if(n<=500){
-    pressure_abs = (sensor.getPressure(ADC_4096)); 
-    int next = fmod(pressure_abs, 10);
+    pressure_abs = (sensor.getPressure(ADC_4096));
+    int diff = pressure_abs - pressure_baseline;
+    //pressure_abs -= 900; 
+    //int next = fmod(pressure_abs, 100);
 
     if (pressure_addr >= (EEPROM.length()-1)){
       EEPROM.write(pressure_addr, END_OF_MEMORY);
     } else {
-      EEPROM.write(pressure_addr, pressure_abs);
-      pressure_addr = pressure_addr + 1;
-      EEPROM.write(pressure_addr, next);
+      EEPROM.write(pressure_addr, diff);
+      //pressure_addr = pressure_addr + 1;
+      //EEPROM.write(pressure_addr, next);
     }
     
     pressure_addr = pressure_addr + 1;
@@ -98,14 +102,14 @@ void loop() {
     Serial.print("Pressure abs (mbar)= ");
     Serial.println(pressure_abs);
     Serial.println(" Mod: ");
-    Serial.println(next);
+    //Serial.println(next);
     n++;
-    delay(1000);
+    delay(300);
    } 
 
    if (read__){
     byte read_value;
-    //for (int x = 0; x<60; x++){
+    //for (int x = 0; x\60; x++){
       read_value = EEPROM.read(pr_address);
 
       Serial.print(pr_address);
@@ -117,4 +121,11 @@ void loop() {
     //}
       //read__ = 0;
    }
+
+   Serial.println("Outside loop value: ");
+
+//   if (true && pressure_addr<EEPROM.length()){
+//    EEPROM.write(pressure_addr, 0);
+//    pressure_addr++;
+//   }
   }
